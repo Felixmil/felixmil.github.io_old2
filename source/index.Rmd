@@ -1,5 +1,10 @@
 ---
-title: "Felix MIL"
+title: " "
 site: distill::distill_website
 listing: posts
 ---
+# Bienvenue !
+
+Here, you can read the blog posts I wrote.
+
+You can also [learn more about me](./about.html) or [explore my personnal timeline](./timeline.html).
