@@ -1,9 +1,44 @@
 ---
-title: "About this blog"
-description: |
-  Some additional details about the blog
+title: "Felix MIL"
+image: "images/me.jpeg"
+links:
+  - label: LinkedIn
+    url: "https://linkedin.com/"
+  - label: Twitter
+    url: "https://twitter.com/"
+  - label: GitHub
+    url: "https://github.com/"
+  - label: Email
+    url: "mailto:email@email.com"
+output:
+  postcards::trestles
 ---
+ 
+## Bio
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
-```
+I'm a `r floor(as.numeric(Sys.Date() - as.Date('1992-09-17')) / 365.242)` years old French living in Paris.
+
+I studied biotechnologies in for health and graduated in 2016 with a [Master Degree](http://www.polytech-angers.fr/fr/index/odf-istia/cycle-ingenieur/ingenieur-biologique-et-sante.html). During my cursus, I had the chance to take part in several project through internships, these experiences allowed me get a precise view of what I wanted to do: *in vitro diagnostic* product development.
+
+After a final and successfull internship in Paris working on nano latex immuno-assays, I was proposed a position as clinical study analyst. This wasn't a clinical study in pharma terms: the goal was to explore clinical potentials of a new type of optical assay the company developped recently. This was defetively a challenge and a chance to wander on unknown lands. So I took it.
+
+I was in charge of study design, data validation, data analysis. My role wasn't clear at the begining, so I sticked to what I knew and started bibliography to find relevant clinical applications. I identified one main clinical area where this new assay could be useful: Trauma management. With that, a wide set of variables that I identified as the most promising ones. An impression grew bigger and bigger as I was pursuing this designing phase: I didn't have the right toolbox to manage all that data efficiently.
+
+I broke my elbow and found myself home for one month: still with that impression in mind, I was determined to get back on those SQL basics I learned in Bioinformatics class. Instead, I stumbled on something that looked so much cooler: R (and the tidyverse)...
+
+
+## Education
+
+**Massachusetts Institute of Technology** | Cambridge, MA
+
+Ph.D. in Computer Science | September 2009 - May 2014
+
+**The University of California, Berkeley** | Berkeley, CA
+
+B.S. in Computer Science | September 2005 - May 2009
+
+## Experience
+
+**Google Brain** | Principal Investigator | January 2018 - Present
+
+**Netflix** | Research Scientist | June 2014 - December 2017
