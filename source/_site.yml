@@ -1,12 +1,14 @@
 name: "source"
-title: "Felix MIL"
+title: "Felix MIL Blog"
 description: |
-  Felix MIL
+  Welcome to my personnal blog.
 output_dir: "../docs"
 navbar:
   right:
     - text: "Home"
       href: index.html
-    - text: "About"
+    - text: "About Me"
       href: about.html
+    - text: "Personnal Timeline"
+      href: timeline.html
 output: distill::distill_article
