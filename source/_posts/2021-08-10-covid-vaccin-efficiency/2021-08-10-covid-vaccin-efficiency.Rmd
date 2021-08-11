@@ -1,0 +1,217 @@
+---
+title: "vaccination efficiency"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(rio)
+library(janitor)
+```
+
+```{r}
+raw_data <- fread("https://data.drees.solidarites-sante.gouv.fr/explore/dataset/covid-19-resultats-issus-des-appariements-entre-si-vic-si-dep-et-vac-si/download/?format=csv&timezone=Europe/Berlin&lang=fr&use_labels_for_header=true&csv_separator=%3B")
+
+colnames(raw_data) <- str_replace(colnames(raw_data),
+                                  pattern = "\\+", 
+                                  replacement = "_pos")
+
+
+```
+
+```{r}
+data <- 
+  raw_data %>%
+  clean_names() %>% # variable names cleaning
+  mutate(
+    vac_statut_f = as.factor(case_when(vac_statut == "Non-vaccinés" ~ "Non vaccinés",
+                             vac_statut != "Non-vaccinés" & vac_statut != "Ensemble" ~ "Vacciné (ou partielement)",
+                             TRUE ~ as.character(NA)) 
+  ))
+```
+
+
+```{r}
+data_by_vac_statut <-
+  data %>% 
+  filter(!is.na(vac_statut_f)) %>%
+  group_by(vac_statut_f) %>%
+  summarise(across(nb_pcr:effectif_j_7, sum))
+```
+
+# Evolution du statut vaccinal
+
+
+```{r}
+data %>%
+  group_by(date,vac_statut) %>%
+  summarise(total = sum(effectif_j_7)) %>%
+  filter(vac_statut != "Ensemble") %>%
+  ggplot(aes(x = date, y = total, fill = vac_statut)) +
+  geom_area(position = "fill")
+  
+```
+
+
+# Taux de positivité de PCR par statut vaccinal
+
+```{r}
+data_by_vac_statut %>%
+  filter(!is.na(vac_statut_f)) %>%
+  select(vac_statut_f, nb_pcr, nb_pcr_pos) %>%
+  mutate(taux = nb_pcr_pos / nb_pcr) %>%
+  ggplot(aes(x = vac_statut_f, y = taux))+
+  geom_col(aes(fill = vac_statut_f),show.legend = F)+
+  scale_y_continuous(labels = scales::percent)
+```
+
+```{r}
+data %>% 
+  filter(!is.na(vac_statut_f)) %>%
+  group_by(date, vac_statut_f) %>%
+  summarise(taux = sum(nb_pcr_pos)/sum(nb_pcr)) %>%
+  ggplot()+
+  geom_point(aes(x = date, y = taux, color = vac_statut_f)) +
+  geom_smooth(aes(x = date, y = taux, color = vac_statut_f), show.legend = F,se = F)+
+  scale_y_continuous(labels = scales::percent) +
+  theme(legend.position = "bottom") + 
+  labs(title = "Taux de Positivité des PCR par statut vaccinal",
+       color = "Statut vaccinal",
+       x = "Date",
+       y = "Taux de Positivité")
+
+```
+
+
+# Taux d'hospitalisation par Statut Vaccinal
+
+```{r}
+data %>%
+    filter(!is.na(vac_statut_f)) %>%
+  group_by(date, vac_statut_f) %>%
+  summarise(taux = sum(hc) / sum(effectif_j_7)) %>%
+  ggplot(aes(x = date, y = taux, color = vac_statut_f)) +
+  geom_point() +
+  geom_smooth(show.legend = F, se = F) +
+  scale_y_continuous(labels = scales::percent)+
+  theme(legend.position = "bottom") + 
+  labs(title = "Taux de d'hospitalisation par Statut Vaccinal",
+       color = "Statut vaccinal",
+       x = "Date",
+       y = "Taux d'Hospitalisation")
+```
+
+# Flowchart
+
+
+```{r}
+
+
+total_effectifs <- 
+  data %>% 
+  filter(date == max(date)) %>% 
+  group_by(vac_statut_f) %>% 
+  summarise(total = sum(effectif_j_7))
+
+pop_n_vacc <- 29842455
+pop_vacc <- 37564786
+
+
+
+pop_n_vacc_to_hc <- 7823
+pop_n_vacc_to_ok <- pop_n_vacc - pop_n_vacc_to_hc
+
+
+pop_vacc_to_hc <- 1594
+pop_vacc_to_ok <- pop_vacc - pop_vacc_to_hc
+
+pop_n_vacc_hc_to_sc <- 2029
+pop_n_vacc_hc_to_ok <- pop_n_vacc_to_hc - pop_n_vacc_hc_to_sc
+
+pop_vacc_hc_to_sc <- 343
+pop_vacc_hc_to_ok <- pop_vacc_to_hc - pop_vacc_hc_to_sc
+
+
+pop_n_vacc_sc_to_dc <- 869
+pop_n_vacc_sc_to_ok <- pop_n_vacc_hc_to_sc - pop_n_vacc_sc_to_dc
+  
+pop_vacc_sc_to_dc <- 235
+pop_vacc_sc_to_ok <- pop_vacc_hc_to_sc - pop_vacc_sc_to_dc
+  
+  
+
+plot_ly(
+    type = "sankey",
+    orientation = "h",
+    node = list(
+      label = c("Population", "Hospitalisation","Ok", "Soin Critique", "Décés"),
+      color = c("grey", "yellow", "green","orange", "firebrick"),
+      pad = 15,
+      thickness = 20,
+      line = list(
+        color = "black",
+        width = 0.5
+      )
+    ),
+  
+    link = list(
+      source = c(0,0,0, 0,1,1,1,1,3,3,3,3),
+      target = c(1,1,2, 2,3,3,2,2,4,4,2,2),
+      value =  c(pop_vacc_to_hc, pop_n_vacc_to_hc,
+                 pop_vacc_to_ok ,pop_n_vacc_to_ok,
+                 pop_vacc_hc_to_sc, pop_n_vacc_hc_to_sc,
+                 pop_vacc_hc_to_ok,pop_n_vacc_hc_to_ok,
+                 pop_vacc_sc_to_dc,pop_n_vacc_sc_to_dc,
+                 pop_vacc_sc_to_ok,pop_n_vacc_sc_to_ok),
+      color = c("#0cc1c6","#e68d87",
+                "#0cc1c6","#e68d87",
+                "#0cc1c6","#e68d87",
+                "#0cc1c6","#e68d87",
+                "#0cc1c6","#e68d87",
+                "#0cc1c6","#e68d87",
+                "#0cc1c6","#e68d87",
+                "#0cc1c6","#e68d87")
+    )
+  )
+```
+
+```{r}
+
+plot_ly(
+    type = "sankey",
+    orientation = "h",
+    node = list(
+      label = c("Population", "Hospitalisation","Ok", "Soin Critique", "Décés"),
+      color = c("grey", "yellow", "green","orange", "firebrick"),
+      pad = 15,
+      thickness = 20,
+      line = list(
+        color = "black",
+        width = 0.5
+      )
+    ),
+  
+    link = list(
+      source = c(1,1,1,1,3,3,3,3),
+      target = c(3,3,2,2,4,4,2,2),
+      value =  c(
+                 pop_vacc_hc_to_sc, pop_n_vacc_hc_to_sc,
+                 pop_vacc_hc_to_ok,pop_n_vacc_hc_to_ok,
+                 pop_vacc_sc_to_dc,pop_n_vacc_sc_to_dc,
+                 pop_vacc_sc_to_ok,pop_n_vacc_sc_to_ok),
+      color = c(
+                "#0cc1c6","#e68d87",
+                "#0cc1c6","#e68d87",
+                "#0cc1c6","#e68d87",
+                "#0cc1c6","#e68d87",
+                "#0cc1c6","#e68d87",
+                "#0cc1c6","#e68d87")
+    )
+  )
+```
+
+
